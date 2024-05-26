@@ -42,6 +42,46 @@ def rank_words(words):
 
     return sorted_words
 
+def human_rank_words(words):
+
+    frequency_of_letters = {}
+    for word in words:
+        for i, letter in enumerate(word):
+            frequency_of_letters[(i, letter)] = frequency_of_letters.get((i, letter), 0) + 1
+            
+
+    probability_of_letters = {}
+
+    l = len(words)
+
+    for letter_pair, frequency in frequency_of_letters.items():
+        probability_of_letters[letter_pair] = frequency / l
+
+    word_scores = {}
+
+    for word in words:
+        prob = 0
+        for i, letter in enumerate(word):
+            prob += probability_of_letters[(i, letter)] * -math.log(probability_of_letters[(i, letter)])
+        word_scores[word] = prob * len(set(word))
+
+    word_probs = {}
+
+    for word in words:
+        prob = 1
+        for i, letter in enumerate(word):
+            prob *= probability_of_letters[(i, letter)]
+        word_probs[word] = prob
+
+    
+    sorted_probs = sorted(word_probs.items(), key=lambda x: x[1], reverse=True)
+    
+
+    sorted_words = sorted(word_scores.items(), key=lambda x: x[1], reverse=True)
+
+    return sorted_words, sorted_probs
+
+
 
 
 def trim_list(correct_placed, wrong_placed_letters, wrong_letters, word_list):
@@ -295,13 +335,16 @@ def human_game( rank_words):
 
         print("Number of tries left: ", num_tries)
         # Guess a word
-        ranked_list = rank_words(words)
+        ranked_list, prob_list = human_rank_words(words)
 
-        guess = ranked_list[0]
 
         print("Suggestions: ")
         for i in range(0, min(5, len(ranked_list))):
             print(f"{i+1}) {ranked_list[i]}")
+
+        print("Probabilities: ")
+        for i in range(0, min(5, len(prob_list))):
+            print(f"{i+1}) {prob_list[i]}")
 
         # Check if guess is correct
 
@@ -345,7 +388,7 @@ def human_game( rank_words):
         num_tries -= 1
 
     if not solved:
-        print("You have run out of tries. The word was ", target_word)
+        
         return -1
 
 def get_strategy_score(strategy):
